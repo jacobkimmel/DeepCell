@@ -24,6 +24,34 @@ direc_name = '$HOME/data/musc_tdtomato/training/'
 set_name = 'musc_tdtomato_101x101.npz'
 file_name_save = os.path.join('$HOME/data/musc_tdtomato/training_npz/', set_name)
 channel_names = ["DIC"]
+feature_names = ["segMask"]
+
+def gauss_filter_2D(shape=(8,8),sigma=2):
+    """
+    2D gaussian mask
+
+    Parameters
+    ----------
+    shape : tuple of integers.
+        height and width of the desired filter.
+        for image smoothing, a shape of at least (4*sigma, 4*sigma)
+        is recommended.
+    sigma : float.
+        sigma for the desired gaussian distribution.
+
+    Returns
+    -------
+    h : ndarray.
+        2D ndarray of floats representing the generated Gaussian filter.
+    """
+    m,n = [(ss-1.)/2. for ss in shape]
+    y,x = np.ogrid[-m:m+1,-n:n+1]
+    h = np.exp( -(x*x + y*y) / (2.*sigma*sigma) )
+    h[ h < np.finfo(h.dtype).eps*h.max() ] = 0
+    sumh = h.sum()
+    if sumh != 0:
+        h /= sumh
+    return h
 
 def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, norm = "median", smooth = "average"):
     '''
@@ -68,9 +96,11 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
     '''
 
     num_channels = len(channel_names)
-    num_direcs = 1 # hardcode to 1 when training from one large directory
+    imglist = glob.glob( os.path.join(direc_name, '*' + channel_names[0] + '*') )
 
-    imglist = os.listdir(direc_name)
+    # count how many occurences of a single channel name appear to find the
+    # number of unique images ("direcs" in van valen's parlance)
+    num_direcs = len(imglist)
 
     # load a temp image to get the image size
     # van valen's get_image() checks file types and uses the tifffile lib if the
@@ -84,41 +114,44 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
     channels = np.zeros((num_direcs, num_channels, image_size_x, image_size_y), dtype='float32')
 
     # Load channels
-    direc_counter = 0 # left in place in case multidir training is added
     channel_counter = 0
     for channel in channel_names:
-        for img in imglist:
+        imglist_channel = glob.glob(os.path.join(direc_name, '*' + channel + '*'))
+        # direc_counter is actually a 'unique FOV counter'
+        # but van valen's parlance is maintained
+        direc_counter = 0
+        assert len(imglist_channel) == num_direcs # ensure all channels have = img #
+        for img in imglist_channel:
             # check if filename has the name of the channel in it
-            if fnmatch.fnmatch(img, r'*' + channel + r'*'):
-                channel_file = img
-                channel_file = os.path.join(direc_name, channel_file)
-                channel_img = get_image(channel_file)
+            channel_file = img # glob returns full file paths
+            channel_img = get_image(channel_file)
 
-                # Normalize the images
-                if norm == 'median':
-                    norm_coeff = np.percentile(channel_img, 50)
-                else:
-                    norm_coeff = np.mean(channel_img)
-                channel_img /= norm_coeff
+            # Normalize the images
+            if norm == 'median':
+                norm_coeff = np.percentile(channel_img, 50)
+            else:
+                norm_coeff = np.mean(channel_img)
+            channel_img /= norm_coeff
 
-                # Convolute with an averaging kernel to smooth noise
-                if smooth == 'average':
-                    avg_kernel = np.ones((2*window_x + 1, 2*window_y + 1))
-                    channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
-                else:
-                    channel_img = ndimage.gaussian_filter(channel_img, sigma=2)
+            # Convolute with a smoothing kernel and subtract from the image
+            # to remove local noise at window scale
+            if smooth == 'average':
+                avg_kernel = np.ones((2*window_x + 1, 2*window_y + 1))
+                channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
+            else:
+                sigma = 2
+                gauss_kernal = gauss_filter_2D((2*window_x + 1, 2*window_y + 1), sigma = sigma)
+                channel_img -= ndimage.convolve(channel_img, gauss_kernel)
 
-                # set channel image as the final two dimensions in a 4D ndarray
-                channels[direc_counter,channel_counter,:,:] = channel_img
-                channel_counter += 1
+
+            # set channel image as the final two dimensions in a 4D ndarray
+            channels[direc_counter,channel_counter,:,:] = channel_img
+            direc_counter += 1
+        channel_counter += 1
 
     return channels
 
-num_of_features = 1
-num_channels = len(channel_names)
-num_direcs = 1 # hardcode to 1 when training from one large directory
-
-def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50):
+def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, image_size = None):
     '''
     Parameters
     ----------
@@ -146,7 +179,7 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50):
 
     '''
 
-    imglist = os.listdir(direc_name)
+    imglist = glob.glob( os.path.join(direc_name, '*' + feature_names[0] + '*') )
 
     # load a temp image to get the image size
     # van valen's get_image() checks file types and uses the tifffile lib if the
@@ -156,7 +189,9 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50):
     # rm temp image from memory
     del img_tmp
 
-    num_direcs = 1 # hardcode
+    # count number of unique fields of view from a single feature
+    num_direcs = len(imglist)
+
     direc_counter = 0 # left in place to add multidir training later
     num_of_features = len(feature_names)
     # init array for the feature masks
@@ -165,19 +200,22 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50):
     # Load feature mask
     for j in range(num_of_features):
         feature_name = feature_names[j]
-        for img in imglist:
-            if fnmatch.fnmatch(img, feature_name):
-                feature_file = os.path.join(direc_name, direc, img)
-                feature_img = get_image(feature_file)
+        direc_counter = 0
+        imglist_feature = glob.glob( os.path.join(direc_name, '*' + feature_name '*') )
+        for img in imglist_feature:
+            feature_file = img # glob.glob returns whole file paths
+            feature_img = get_image(feature_file)
 
-                if np.sum(feature_img) > 0:
-                    feature_img /= np.amax(feature_img)
+            if np.sum(feature_img) > 0:
+                feature_img /= np.amax(feature_img)
 
-                feature_mask[direc_counter,j,:,:] = feature_img
+            feature_mask[direc_counter,j,:,:] = feature_img
+            direc_counter += 1
 
     # Compute the mask for the background
-    feature_mask_sum = np.sum(feature_mask[direc_counter,:,:,:], axis = 0)
-    feature_mask[direc_counter,num_of_features,:,:] = 1 - feature_mask_sum
+    for idx in range(feature_mask.shape[0]):
+        feature_mask_sum = np.sum(feature_mask[idx,:,:,:], axis = 0)
+        feature_mask[idx,num_of_features,:,:] = 1 - feature_mask_sum
 
     return feature_mask
 
