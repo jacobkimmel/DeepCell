@@ -103,7 +103,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
 
                 # Convolute with an averaging kernel to smooth noise
                 if smooth == 'average':
-                    avg_kernel = np.ones((2*window_size_x + 1, 2*window_size_y + 1))
+                    avg_kernel = np.ones((2*window_x + 1, 2*window_y + 1))
                     channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
                 else:
                     channel_img = ndimage.gaussian_filter(channel_img, sigma=2)
@@ -274,8 +274,8 @@ def identify_training_pixels(channels, feature_mask, min_num, max_training_examp
 
             for i in rand_ind:
                 if feature_counter < min_pixel_counter:
-                    if (feature_rows_temp[i] - window_size_x > 0) and (feature_rows_temp[i] + window_size_x < image_size_x):
-                        if (feature_cols_temp[i] - window_size_y > 0) and (feature_cols_temp[i] + window_size_y < image_size_y):
+                    if (feature_rows_temp[i] - window_x > 0) and (feature_rows_temp[i] + window_x < image_size_x):
+                        if (feature_cols_temp[i] - window_y > 0) and (feature_cols_temp[i] + window_y < image_size_y):
                             feature_rows += [feature_rows_temp[i]]
                             feature_cols += [feature_cols_temp[i]]
                             feature_batch += [direc]
