@@ -10,7 +10,9 @@ import scipy as sp
 from scipy import ndimage
 from skimage import feature
 from cnn_functions import get_image
-import glob, os, fnmatch
+import glob
+import os
+import fnmatch
 
 max_training_examples = 1*10**7
 # number of pixels to span from the center pixels in either direction
@@ -73,7 +75,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
     # load a temp image to get the image size
     # van valen's get_image() checks file types and uses the tifffile lib if the
     # file is a tiff, otherwise falling back to skimages io.imread()
-    img_tmp = get_image( os.path.join( direc_name, img_list[0] ) )
+    img_tmp = get_image( os.path.join( direc_name, imglist[0] ) )
     image_size_x, image_size_y = img_tmp.shape
     # rm temp image from memory
     del img_tmp
@@ -143,6 +145,16 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50):
             where the final feature_number is the background class.
 
     '''
+
+    imglist = os.listdir(direc_name)
+
+    # load a temp image to get the image size
+    # van valen's get_image() checks file types and uses the tifffile lib if the
+    # file is a tiff, otherwise falling back to skimages io.imread()
+    img_tmp = get_image( os.path.join( direc_name, imglist[0] ) )
+    image_size_x, image_size_y = img_tmp.shape
+    # rm temp image from memory
+    del img_tmp
 
     num_direcs = 1 # hardcode
     direc_counter = 0 # left in place to add multidir training later
