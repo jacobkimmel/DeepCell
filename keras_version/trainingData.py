@@ -53,7 +53,7 @@ def gauss_filter_2D(shape=(8,8),sigma=2):
         h /= sumh
     return h
 
-def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, norm = "median", smooth = "average"):
+def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, max_direcs = 100, norm = "median", smooth = "average"):
     '''
     Load channel images from a directory with a standardized naming scheme into
     a 4D ndarray for training
@@ -78,6 +78,10 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
             number of pixels on either side of the interrogated pixel to
             sample for classification in Y
             (used as the size of an averaging filter)
+    max_direcs : integer, optional.
+            maximum number of unique fields of view to load for training,
+            primarily limited to conserve memory. 
+            Default = 100.
     norm : string, optional.
             string specifying normalization metric to use.
             Options : "median", "mean"
@@ -93,6 +97,14 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
     channels : ndarray.
             4-dimensional ndarray of images with the following format
             channels.shape = [directory_number, channel_number, img_x, img_y]
+    
+    Notes
+    -----
+    Ensure that max_direcs is set to an appropriate size, or a MemoryError will
+    occur when trying to generate a large ndarray to store all the channel images.
+    For reference, an empty ndarray of zeros sized for 100 images at 4 megapixels
+    ( created with np.zeros(100,1,2024,2024) ) requires 3GB of available memory.
+
     '''
 
     num_channels = len(channel_names)
@@ -105,22 +117,31 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
     # load a temp image to get the image size
     # van valen's get_image() checks file types and uses the tifffile lib if the
     # file is a tiff, otherwise falling back to skimages io.imread()
-    img_tmp = get_image( os.path.join( direc_name, imglist[0] ) )
+    img_tmp = get_image( imglist[0] )
     image_size_x, image_size_y = img_tmp.shape
     # rm temp image from memory
     del img_tmp
 
+    # set the number of direcs to be loaded as the provided max_direcs if the number
+    # present is greater
+    if num_direcs > max_direcs:
+        load_direcs = max_direcs
+    else:
+        load_direcs = num_direcs
+
     # init an array for the predictive images
-    channels = np.zeros((num_direcs, num_channels, image_size_x, image_size_y), dtype='float32')
+    channels = np.zeros((load_direcs, num_channels, image_size_x, image_size_y), dtype='float32')
 
     # Load channels
     channel_counter = 0
     for channel in channel_names:
         imglist_channel = glob.glob(os.path.join(direc_name, '*' + channel + '*'))
+        assert len(imglist_channel) == num_direcs # ensure all channels have = img #
+        # select only the first N unique fields of view, where N = load_direcs
+        imglist_channel = imglist_channel[:load_direcs]
         # direc_counter is actually a 'unique FOV counter'
         # but van valen's parlance is maintained
         direc_counter = 0
-        assert len(imglist_channel) == num_direcs # ensure all channels have = img #
         for img in imglist_channel:
             # check if filename has the name of the channel in it
             channel_file = img # glob returns full file paths
@@ -151,7 +172,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
 
     return channels
 
-def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, image_size = None):
+def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, max_direcs = 100):
     '''
     Parameters
     ----------
@@ -168,6 +189,10 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
     window_y : integer, optional.
             number of pixels on either side of the interrogated pixel to
             sample for classification in Y.
+    max_direcs : integer, optional.
+            maximum number of unique images to load in the training set,
+            primarily limited to conserve memory.
+            Default = 100.
 
     Return
     ------
@@ -176,15 +201,21 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
             feature_mask.shape = [directory_number, feature_number, mask_x, mask_y]
 
             where the final feature_number is the background class.
+    Notes
+    -----
+    Ensure that max_direcs is set to an appropriate size, or a MemoryError will
+    occur when trying to generate a large ndarray to store all the channel image
+    For reference, an empty ndarray of zeros sized for 100 images at 4 megapixels
+    ( created with np.zeros(100,1,2024,2024) ) requires 3GB of available memory.
 
     '''
-
+       
     imglist = glob.glob( os.path.join(direc_name, '*' + feature_names[0] + '*') )
-
+   
     # load a temp image to get the image size
     # van valen's get_image() checks file types and uses the tifffile lib if the
     # file is a tiff, otherwise falling back to skimages io.imread()
-    img_tmp = get_image( os.path.join( direc_name, imglist[0] ) )
+    img_tmp = get_image( imglist[0] )
     image_size_x, image_size_y = img_tmp.shape
     # rm temp image from memory
     del img_tmp
@@ -201,7 +232,7 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
     for j in range(num_of_features):
         feature_name = feature_names[j]
         direc_counter = 0
-        imglist_feature = glob.glob( os.path.join(direc_name, '*' + feature_name '*') )
+        imglist_feature = glob.glob( os.path.join(direc_name, '*' + feature_name + '*') )
         for img in imglist_feature:
             feature_file = img # glob.glob returns whole file paths
             feature_img = get_image(feature_file)
