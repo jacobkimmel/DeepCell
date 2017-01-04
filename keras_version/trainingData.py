@@ -80,7 +80,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, m
             (used as the size of an averaging filter)
     max_direcs : integer, optional.
             maximum number of unique fields of view to load for training,
-            primarily limited to conserve memory. 
+            primarily limited to conserve memory.
             Default = 100.
     norm : string, optional.
             string specifying normalization metric to use.
@@ -97,7 +97,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, m
     channels : ndarray.
             4-dimensional ndarray of images with the following format
             channels.shape = [directory_number, channel_number, img_x, img_y]
-    
+
     Notes
     -----
     Ensure that max_direcs is set to an appropriate size, or a MemoryError will
@@ -209,9 +209,9 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
     ( created with np.zeros(100,1,2024,2024) ) requires 3GB of available memory.
 
     '''
-       
+
     imglist = glob.glob( os.path.join(direc_name, '*' + feature_names[0] + '*') )
-   
+
     # load a temp image to get the image size
     # van valen's get_image() checks file types and uses the tifffile lib if the
     # file is a tiff, otherwise falling back to skimages io.imread()
@@ -223,16 +223,26 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
     # count number of unique fields of view from a single feature
     num_direcs = len(imglist)
 
+    # set the number of direcs to be loaded as the provided max_direcs if the number
+    # present is greater
+    if num_direcs > max_direcs:
+        load_direcs = max_direcs
+    else:
+        load_direcs = num_direcs
+
     direc_counter = 0 # left in place to add multidir training later
     num_of_features = len(feature_names)
     # init array for the feature masks
-    feature_mask = np.zeros((num_direcs, num_of_features + 1, image_size_x, image_size_y))
+    feature_mask = np.zeros((load_direcs, num_of_features + 1, image_size_x, image_size_y))
 
     # Load feature mask
     for j in range(num_of_features):
         feature_name = feature_names[j]
         direc_counter = 0
         imglist_feature = glob.glob( os.path.join(direc_name, '*' + feature_name + '*') )
+        assert len(imglist_feature) == num_direcs # check mask #'s are =
+        # truncate imglist_feature to only the first N unique fields of view
+        imglist_feature = imglist_feature[:load_direcs]
         for img in imglist_feature:
             feature_file = img # glob.glob returns whole file paths
             feature_img = get_image(feature_file)
