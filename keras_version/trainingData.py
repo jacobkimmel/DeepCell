@@ -91,7 +91,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, n
             # check if filename has the name of the channel in it
             if fnmatch.fnmatch(img, r'*' + channel + r'*'):
                 channel_file = img
-                channel_file = os.path.join(training_direcs, channel_file)
+                channel_file = os.path.join(direc_name, channel_file)
                 channel_img = get_image(channel_file)
 
                 # Normalize the images
