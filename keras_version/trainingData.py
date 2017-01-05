@@ -168,6 +168,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, m
             # set channel image as the final two dimensions in a 4D ndarray
             channels[direc_counter,channel_counter,:,:] = channel_img
             direc_counter += 1
+            print(direc_counter)
         channel_counter += 1
 
     return channels
@@ -337,6 +338,8 @@ def identify_training_pixels(channels, feature_mask, min_num, max_training_examp
     feature_batch = []
     feature_label = []
 
+    image_size_x, image_size_y = channels.shape[2], channels.shape[3]
+
     for direc in xrange(channels.shape[0]):
 
         for k in xrange(feature_mask.shape[1]):
@@ -356,7 +359,7 @@ def identify_training_pixels(channels, feature_mask, min_num, max_training_examp
             rand_ind = np.random.choice(non_rand_ind, size = len(non_rand_ind), replace = False)
 
             for i in rand_ind:
-                if feature_counter < min_pixel_counter:
+                if feature_counter < min_num:
                     if (feature_rows_temp[i] - window_x > 0) and (feature_rows_temp[i] + window_x < image_size_x):
                         if (feature_cols_temp[i] - window_y > 0) and (feature_cols_temp[i] + window_y < image_size_y):
                             feature_rows += [feature_rows_temp[i]]
