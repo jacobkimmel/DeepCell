@@ -245,7 +245,11 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
         imglist_feature = imglist_feature[:load_direcs]
         for img in imglist_feature:
             feature_file = img # glob.glob returns whole file paths
-            feature_img = get_image(feature_file)
+            # set the mask files to be inverted
+            # weird color map bug in skimage / tifffile lib leads to inversion
+            # of binary tiff's exported from matlab
+            # https://github.com/scikit-image/scikit-image/issues/1940
+            feature_img = get_image(feature_file, invert = True)
 
             if np.sum(feature_img) > 0:
                 feature_img /= np.amax(feature_img)
