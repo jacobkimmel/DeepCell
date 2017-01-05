@@ -14,18 +14,6 @@ import glob
 import os
 import fnmatch
 
-max_training_examples = 1*10**7
-# number of pixels to span from the center pixels in either direction
-# window_x, window_y = 50, 50 will yield 101 x 101 px image
-window_x = 50
-window_y = 50
-
-direc_name = '$HOME/data/musc_tdtomato/training/'
-set_name = 'musc_tdtomato_101x101.npz'
-file_name_save = os.path.join('$HOME/data/musc_tdtomato/training_npz/', set_name)
-channel_names = ["DIC"]
-feature_names = ["segMask"]
-
 def gauss_filter_2D(shape=(8,8),sigma=2):
     """
     2D gaussian mask
