@@ -292,22 +292,18 @@ def determine_min_examples(feature_mask, window_x, window_y):
     # regions during segmentation
     feature_mask_trimmed = feature_mask[:,:,window_x+1:-window_x-1,window_y+1:-window_y-1]
     px_counts = np.zeros([feature_mask.shape[1], 1])
-    for i in range(feature_mask.shape[0]):
-        for j in range(feature_mask.shape[1]-1):
-            px_counts[j] = np.sum(feature_mask_trimmed[i,j,:,:])
+    for i in range(feature_mask.shape[1]):
+        px_counts[i] = np.sum(feature_mask_trimmed[:,i,:,:])
 
-    min_num = np.min(px_counts)
+    min_num = int( np.min(px_counts) )
     return min_num
 
-def identify_training_pixels(channels, feature_mask, min_num, max_training_examples = np.Inf):
+def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50, max_training_examples = np.Inf):
     '''
     Identifies pixels to use for training using randomization & class balancing
 
     Parameters
     ----------
-    channels : ndarray.
-        4-dimensional ndarray of images with the following format
-        channels.shape = [directory_number, channel_number, img_x, img_y]
     feature_mask : ndarray.
         4-dimensional ndarray of images with the following format
         feature_mask.shape = [directory_number, feature_number, mask_x, mask_y]
@@ -315,6 +311,12 @@ def identify_training_pixels(channels, feature_mask, min_num, max_training_examp
     min_num : integer.
         minimum number of pixels in a feature, i.e. the smallest class.
         used to class balance the training pixels.
+    window_x : integer, optional.
+            number of pixels on either side of the interrogated pixel to
+            sample for classification in X.
+    window_y : integer, optional.
+            number of pixels on either side of the interrogated pixel to
+            sample for classification in Y.
     max_training_examples : integer, optional.
         maximum number of examples to use. Default = Inf.
 
@@ -331,58 +333,46 @@ def identify_training_pixels(channels, feature_mask, min_num, max_training_examp
         ground truth class labels for pixels to train on.
     '''
 
+    # typecast min_num
+    min_num = int(min_num)
 
-    # init lists storing row, col locations, batch, and ground truth labels
-    feature_rows = []
-    feature_cols = []
-    feature_batch = []
-    feature_label = []
+    # make a set of masks with the edge features removed
+    feature_mask_trimmed = np.copy(feature_mask)
+    feature_mask_trimmed[:,:,:window_x+1,:] = 0
+    feature_mask_trimmed[:,:,-window_x-1:,:] = 0
+    feature_mask_trimmed[:,:,:,:window_y+1] = 0
+    feature_mask_trimmed[:,:,:,-window_y-1:] = 0
 
-    image_size_x, image_size_y = channels.shape[2], channels.shape[3]
-
-    for direc in xrange(channels.shape[0]):
-
-        for k in xrange(feature_mask.shape[1]):
-            feature_counter = 0
-            # identify row and col locations of True pixels in all feature masks
-            feature_rows_temp, feature_cols_temp = np.where(feature_mask[direc,k,:,:] == 1)
-
-            # Check to make sure the features are actually present
-            if len(feature_rows_temp) <= 0:
-                print("feature_rows_temp was empty, exiting")
-                return
-
-            # Randomly permute index vector
-            # get an array of indices in order
-            non_rand_ind = np.arange(len(feature_rows_temp))
-            # randomly shuffle this ordered array of indices
-            rand_ind = np.random.choice(non_rand_ind, size = len(non_rand_ind), replace = False)
-
-            for i in rand_ind:
-                if feature_counter < min_num:
-                    if (feature_rows_temp[i] - window_x > 0) and (feature_rows_temp[i] + window_x < image_size_x):
-                        if (feature_cols_temp[i] - window_y > 0) and (feature_cols_temp[i] + window_y < image_size_y):
-                            feature_rows += [feature_rows_temp[i]]
-                            feature_cols += [feature_cols_temp[i]]
-                            feature_batch += [direc]
-                            feature_label += [k]
-                            feature_counter += 1
-
-    feature_rows = np.array(feature_rows, dtype = 'int32')
-    feature_cols = np.array(feature_cols, dtype = 'int32')
-    feature_batch = np.array(feature_batch, dtype = 'int32')
-    feature_label = np.array(feature_label, dtype = 'int32')
+    # init empty feature matrix
+    all_feature_mat = np.zeros([4, min_num * feature_mask.shape[1]])
+    for feature in range(feature_mask.shape[1]):
+        one_feature_mat = np.array([])
+        for batch in range(feature_mask.shape[0]):
+            feature_rows_temp, feature_cols_temp = np.where(feature_mask_trimmed[batch,feature,:,:] == 1)
+            batch_mat = np.vstack([feature_rows_temp, feature_cols_temp, np.repeat(batch, len(feature_rows_temp)), np.repeat(feature, len(feature_rows_temp))])
+            one_feature_mat = np.hstack([one_feature_mat, batch_mat]) if one_feature_mat.size else batch_mat
+        # shuffle columns of one_feature_mat to avoid clipping sample diversity
+        idx = np.arange(one_feature_mat.shape[1])
+        rand_idx = np.random.choice(idx, size=len(idx), replace=False)
+        one_feature_mat = one_feature_mat[:, rand_idx]
+        # reduce sample size to the smallest class size
+        one_feature_mat = one_feature_mat[:,:min_num]
+        # load each feature into the global matrix
+        all_feature_mat[:, feature*min_num : (feature+1)*min_num ] = one_feature_mat
 
     # Randomly select training points if there are more than a specified
     # maximum number of examples
-    if len(feature_rows) > max_training_examples:
-    	non_rand_ind = np.arange(len(feature_rows))
-    	rand_ind = np.random.choice(non_rand_ind, size = max_training_examples, replace = False)
+    if all_feature_mat.shape[1] > max_training_examples:
+        idx = np.arange(all_feature_mat.shape[1])
+        rand_idx = np.random.choice(idx, size=len(idx), replace=False)
+        all_feature_mat = all_feature_mat[:,rand_idx]
+        all_feature_mat = all_feature_mat[:,:max_training_examples]
 
-    	feature_rows = feature_rows[rand_ind]
-    	feature_cols = feature_cols[rand_ind]
-    	feature_batch = feature_batch[rand_ind]
-    	feature_label = feature_label[rand_ind]
+    feature_rows = np.array(all_feature_mat[0,:], dtype = 'int32')
+    feature_cols = np.array(all_feature_mat[1,:], dtype = 'int32')
+    feature_batch = np.array(all_feature_mat[2,:], dtype = 'int32')
+    feature_label = np.array(all_feature_mat[3,:], dtype = 'int32')
+
 
     return feature_rows, feature_cols, feature_batch, feature_label
 
