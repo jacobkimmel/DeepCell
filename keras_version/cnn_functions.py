@@ -178,7 +178,7 @@ def combinations_same(array):
     combs = []
     y = []
     for elt in array:
-        for j in xrange((len(array)-1)/2):
+        for j in range((len(array)-1)/2):
             combs += [(elt,elt)]
             y += [1]
     return combs, y
@@ -223,27 +223,27 @@ def tensorprod_softmax(x):
 def sparse_pool(input_image, stride = 2, pool_size = (2,2), mode = 'max'):
     pooled_array = []
     counter = 0
-    for offset_x in xrange(stride):
-        for offset_y in xrange(stride):
+    for offset_x in range(stride):
+        for offset_y in range(stride):
             pooled_array +=[pool_2d(input_image[:, :, offset_x::stride, offset_y::stride], pool_size, st = (1,1), mode = mode, padding = (0,0), ignore_border = True)]
             counter += 1
 
     # Concatenate pooled image to create one big image
     running_concat = []
-    for it in xrange(stride):
+    for it in range(stride):
         running_concat += [T.concatenate(pooled_array[stride*it:stride*(it+1)], axis = 3)]
     concatenated_image = T.concatenate(running_concat,axis = 2)
 
     pooled_output_array = []
 
-    for it in xrange(counter+1):
+    for it in range(counter+1):
         pooled_output_array += [T.tensor4()]
 
     pooled_output_array[0] = concatenated_image
 
     counter = 0
-    for offset_x in xrange(stride):
-        for offset_y in xrange(stride):
+    for offset_x in range(stride):
+        for offset_y in range(stride):
             pooled_output_array[counter+1] = T.set_subtensor(pooled_output_array[counter][:, :, offset_x::stride, offset_y::stride], pooled_array[counter])
             counter += 1
     return pooled_output_array[counter]
@@ -426,7 +426,7 @@ def get_data_siamese(file_name):
     input_1_test = np.zeros((num_test,) + image_list.shape[1:], dtype = 'float32')
     input_2_test = np.zeros((num_test,) + image_list.shape[1:], dtype = 'float32')
 
-    for j in xrange(num_test):
+    for j in range(num_test):
         input_1_test[j] = image_list[id_test[j][0]]
         input_2_test[j] = image_list[id_test[j][1]]
 
@@ -1405,9 +1405,9 @@ def get_images_from_directory(data_location, channel_names):
     n_channels = len(channel_names)
     all_images = []
 
-    for stack_iteration in xrange(len(img_list_channels[0])):
+    for stack_iteration in range(len(img_list_channels[0])):
         all_channels = np.zeros((1, n_channels, img_temp.shape[0],img_temp.shape[1]), dtype = 'float32')
-        for j in xrange(n_channels):
+        for j in range(n_channels):
             channel_img = get_image(os.path.join(data_location, img_list_channels[j][stack_iteration]))
             all_channels[0,j,:,:] = channel_img
         all_images += [all_channels]
@@ -1416,7 +1416,7 @@ def get_images_from_directory(data_location, channel_names):
 
 def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, process = True):
     if process:
-        for j in xrange(image.shape[1]):
+        for j in range(image.shape[1]):
             image[0,j,:,:] = process_image(image[0,j,:,:], win_x, win_y, std)
 
     if split:
@@ -1461,13 +1461,13 @@ def run_model_on_directory(data_location, channel_names, output_location, model,
     processed_image_list = []
 
     for image in image_list:
-        print "Processing image " + str(counter + 1) + " of " + str(len(image_list))
+        print("Processing image " + str(counter + 1) + " of " + str(len(image_list)))
         processed_image = run_model(image, model, win_x = win_x, win_y = win_y, std = std, split = split, process = process)
         processed_image_list += [processed_image]
 
         # Save images
         if save:
-            for feat in xrange(n_features):
+            for feat in range(n_features):
                 feature = processed_image[feat,:,:]
                 cnnout_name = os.path.join(output_location, 'feature_' + str(feat) +"_frame_"+ str(counter) + r'.tif')
                 tiff.imsave(cnnout_name,feature)
@@ -1493,8 +1493,8 @@ def run_models_on_directory(data_location, channel_names, output_location, model
 
     # Save images
     if save:
-        for img in xrange(model_output.shape[0]):
-            for feat in xrange(n_features):
+        for img in range(model_output.shape[0]):
+            for feat in range(n_features):
                 feature = model_output[img,feat,:,:]
                 cnnout_name = os.path.join(output_location, 'feature_' + str(feat) + "_frame_" + str(img) + r'.tif')
                 tiff.imsave(cnnout_name,feature)
@@ -1545,7 +1545,7 @@ class fcycle(object):
 
 # SI and IS operators for 2D and 3D.
 _P2 = [np.eye(3), np.array([[0,1,0]]*3), np.flipud(np.eye(3)), np.rot90([[0,1,0]]*3)]
-_P3 = [np.zeros((3,3,3)) for i in xrange(9)]
+_P3 = [np.zeros((3,3,3)) for i in range(9)]
 
 _P3[0][:,:,1] = 1
 _P3[1][:,1,:] = 1
@@ -1566,12 +1566,12 @@ def SI(u):
     elif np.ndim(u) == 3:
         P = _P3
     else:
-        raise ValueError, "u has an invalid number of dimensions (should be 2 or 3)"
+        raise ValueError("u has an invalid number of dimensions (should be 2 or 3)")
 
     if u.shape != _aux.shape[1:]:
         _aux = np.zeros((len(P),) + u.shape)
 
-    for i in xrange(len(P)):
+    for i in range(len(P)):
         _aux[i] = binary_erosion(u, P[i])
 
     return _aux.max(0)
@@ -1584,12 +1584,12 @@ def IS(u):
     elif np.ndim(u) == 3:
         P = _P3
     else:
-        raise ValueError, "u has an invalid number of dimensions (should be 2 or 3)"
+        raise ValueError("u has an invalid number of dimensions (should be 2 or 3)")
 
     if u.shape != _aux.shape[1:]:
         _aux = np.zeros((len(P),) + u.shape)
 
-    for i in xrange(len(P)):
+    for i in range(len(P)):
         _aux[i] = binary_dilation(u, P[i])
 
     return _aux.min(0)
@@ -1643,7 +1643,7 @@ class MorphACWE(object):
         u = self._u
 
         if u is None:
-            raise ValueError, "the levelset function is not set (use set_levelset)"
+            raise ValueError("the levelset function is not set (use set_levelset)")
 
         data = self.data
 
@@ -1670,7 +1670,7 @@ class MorphACWE(object):
         res[aux > 0] = 0
 
         # Smoothing.
-        for i in xrange(self.smoothing):
+        for i in range(self.smoothing):
             res = curvop(res)
 
         # Apply mask
@@ -1680,14 +1680,14 @@ class MorphACWE(object):
 
     def run(self, iterations):
         """Run several iterations of the morphological Chan-Vese method."""
-        for i in xrange(iterations):
+        for i in range(iterations):
             self.step()
 
 def segment_image_w_morphsnakes(img, nuc_label, num_iters, smoothing = 2):
     morph_snake = MorphACWE(img, smoothing = smoothing, lambda1 = 1, lambda2 = 1)
     morph_snake.levelset = np.float16(nuc_label > 0)
 
-    for j in xrange(num_iters):
+    for j in range(num_iters):
         morph_snake.step()
 
     seg_input = morph_snake.levelset
@@ -1708,7 +1708,7 @@ def dice_jaccard_indices(mask, val, nuc_mask):
     mask_label = label(mask, background = 0)
     val_label = label(val, background = 0)
 
-    for j in xrange(1,np.amax(val_label)+1):
+    for j in range(1,np.amax(val_label)+1):
         if np.sum((val_label == j) * nuc_mask) == 0:
             val_label[val_label == j] = 0
 
@@ -1750,9 +1750,9 @@ def dice_jaccard_indices(mask, val, nuc_mask):
 
     JI = np.mean(jac_list)
     DI = np.mean(dice_list)
-    print jac_list, dice_list
-    print "Jaccard index is " + str(JI) + " +/- " + str(np.std(jac_list))
-    print "Dice index is " + str(DI)  + " +/- " + str(np.std(dice_list))
+    print(jac_list, dice_list)
+    print("Jaccard index is " + str(JI) + " +/- " + str(np.std(jac_list)))
+    print("Dice index is " + str(DI)  + " +/- " + str(np.std(dice_list)))
 
     return JI, DI
 
