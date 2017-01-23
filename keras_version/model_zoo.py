@@ -28,7 +28,7 @@ Vanilla convnets
 """
 
 def feature_net_31x31(n_channels = 1, n_features = 3, reg = 0.001, drop = 0.5, init = 'he_normal'):
-	print "Using feature net 31x31"
+	print("Using feature net 31x31")
 
 	model = Sequential()
 	model.add(Convolution2D(32, 4, 4, init = init, border_mode='valid', input_shape=(n_channels, 31, 31), W_regularizer = l2(reg)))
@@ -79,7 +79,7 @@ def sparse_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features = 3
 
 	model.add(sparse_Convolution2D(128, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(200, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Dropout(drop))
 	model.add(Activation('relu'))
@@ -96,26 +96,26 @@ def sparse_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features = 3
 	return model
 
 def feature_net_61x61(n_features = 3, n_channels = 2, reg = 0.001, drop = 0.5, init = 'he_normal'):
-	print "Using feature net 61x61"
+	print("Using feature net 61x61")
 
 	model = Sequential()
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', input_shape=(n_channels, 61, 61), W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 4, 4, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
 
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -143,7 +143,7 @@ def sparse_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features = 3
 	d = 1
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, batch_input_shape = batch_input_shape, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 4, 4, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
@@ -151,7 +151,7 @@ def sparse_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features = 3
 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
@@ -159,7 +159,7 @@ def sparse_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features = 3
 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
@@ -179,11 +179,11 @@ def sparse_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features = 3
 	return model
 
 def feature_net_81x81(n_features = 3, n_channels = 2, reg = 1e-5, init = 'he_normal', drop = 0.5):
-	print "Using feature net 81x81"
+	print("Using feature net 81x81")
 	model = Sequential()
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', input_shape=(n_channels, 81, 81), W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 4, 4, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -232,26 +232,26 @@ def sparse_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features = 3
 	d = 1
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, batch_input_shape = batch_input_shape, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 4, 4, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
-	
+
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
-	
+
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
@@ -274,8 +274,8 @@ def sparse_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features = 3
 	return model
 
 def feature_net_101x101(n_features = 3, reg = 0.001, init = 'he_normal', drop = 0.5):
-	print "Using feature net 101x101"
- 
+	print("Using feature net 101x101")
+
 	model = Sequential()
 	model.add(Convolution2D(32, 4, 4, init = init, border_mode='valid', input_shape=(2, 101, 101), W_regularizer = l2(reg)))
 	model.add(Activation('relu'))
@@ -366,7 +366,7 @@ def sparse_feature_net_101x101(batch_input_shape = (1,2,1080,1280), n_features =
 Batch normalized convnets
 """
 def bn_feature_net_21x21(n_channels = 1, n_features = 3, reg = 1e-5, init = 'he_normal'):
-	print "Using feature net 21x21 with batch normalization"
+	print("Using feature net 21x21 with batch normalization")
 
 	model = Sequential()
 	model.add(Convolution2D(32, 4, 4, init = init, border_mode='valid', input_shape=(n_channels, 21, 21), W_regularizer = l2(reg)))
@@ -401,7 +401,7 @@ def bn_feature_net_21x21(n_channels = 1, n_features = 3, reg = 1e-5, init = 'he_
 	return model
 
 def bn_feature_net_31x31(n_channels = 1, n_features = 3, reg = 1e-5, init = 'he_normal'):
-	print "Using feature net 31x31 with batch normalization"
+	print("Using feature net 31x31 with batch normalization")
 
 	model = Sequential()
 	model.add(Convolution2D(32, 4, 4, init = init, border_mode='valid', input_shape=(n_channels, 31, 31), W_regularizer = l2(reg)))
@@ -441,7 +441,7 @@ def sparse_bn_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features 
 	model = Sequential()
 	d = 1
 
-	model.add(sparse_Convolution2D(32, 4, 4, d = d, init = init, batch_input_shape = batch_input_shape, border_mode='valid', W_regularizer = l2(reg)))	
+	model.add(sparse_Convolution2D(32, 4, 4, d = d, init = init, batch_input_shape = batch_input_shape, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
@@ -460,7 +460,7 @@ def sparse_bn_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features 
 	model.add(sparse_Convolution2D(128, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(200, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -477,12 +477,12 @@ def sparse_bn_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features 
 	return model
 
 def bn_feature_net_61x61(n_features = 3, n_channels = 2, reg = 1e-5, init = 'he_normal'):
-	print "Using feature net 61x61 with batch normalization"
+	print("Using feature net 61x61 with batch normalization")
 	model = Sequential()
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', input_shape=(n_channels, 61, 61), W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 4, 4, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -491,7 +491,7 @@ def bn_feature_net_61x61(n_features = 3, n_channels = 2, reg = 1e-5, init = 'he_
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -500,7 +500,7 @@ def bn_feature_net_61x61(n_features = 3, n_channels = 2, reg = 1e-5, init = 'he_
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -528,7 +528,7 @@ def sparse_bn_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, batch_input_shape = batch_input_shape, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 4, 4, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -538,7 +538,7 @@ def sparse_bn_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -548,7 +548,7 @@ def sparse_bn_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -571,12 +571,12 @@ def sparse_bn_feature_net_61x61(batch_input_shape = (1,2,1080,1280), n_features 
 	return model
 
 def bn_feature_net_81x81(n_features = 2, n_channels = 1, reg = 1e-5, init = 'he_normal'):
-	print "Using feature net 81x81 with batch normalization"
+	print("Using feature net 81x81 with batch normalization")
 	model = Sequential()
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', input_shape=(n_channels, 81, 81), W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(Convolution2D(64, 4, 4, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -631,17 +631,17 @@ def sparse_bn_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, batch_input_shape = batch_input_shape, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 4, 4, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
-	
+
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -650,12 +650,12 @@ def sparse_bn_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
 	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
-	
+
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	
+
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
@@ -686,7 +686,7 @@ Multiresolution networks
 """
 
 def bn_feature_net_multires_31x31(n_features = 3, n_channels = 1, reg = 1e-5):
-	print "Using multiresolution feature net 31x31 with batch normalization"
+	print("Using multiresolution feature net 31x31 with batch normalization")
 
 	inputs = Input(shape = (n_channels,31,31))
 	layer1 = Convolution2D(32, 4, 4, init = 'he_normal', border_mode='valid', input_shape=(n_channels, 31, 31), W_regularizer = l2(reg))(inputs)
@@ -731,7 +731,7 @@ def bn_feature_net_multires_31x31(n_features = 3, n_channels = 1, reg = 1e-5):
 	return model
 
 def sparse_bn_feature_net_multires_31x31(batch_input_shape = (1,2,1080,1280), n_features = 3, n_channels = 1, reg = 1e-5, weights_path = None):
-	print "Using multiresolution feature net 31x31 with batch normalization"
+	print("Using multiresolution feature net 31x31 with batch normalization")
 
 	d = 1
 	inputs = Input(shape = batch_input_shape[1:])
@@ -739,7 +739,7 @@ def sparse_bn_feature_net_multires_31x31(batch_input_shape = (1,2,1080,1280), n_
 	norm1 = BatchNormalization(axis = 1)(layer1)
 	act1 = Activation('relu')(norm1)
 	pool1 = sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d))(act1)
-	
+
 	d *= 2
 	layer2 = sparse_Convolution2D(64, 3, 3, d =d, init = 'he_normal', border_mode='valid', W_regularizer = l2(reg))(pool1)
 	norm2 = BatchNormalization(axis = 1)(layer2)
@@ -778,7 +778,7 @@ def sparse_bn_feature_net_multires_31x31(batch_input_shape = (1,2,1080,1280), n_
 	return model
 
 def bn_feature_net_multires_61x61(n_features = 3, n_channels = 2, reg = 1e-5):
-	print "Using multiresolution feature net 61x61 with batch normalization"
+	print("Using multiresolution feature net 61x61 with batch normalization")
 
 	inputs = Input(shape = (n_channels,61,61))
 	layer1 = Convolution2D(64, 3, 3, init = 'he_normal', border_mode='valid', input_shape=(n_channels, 61, 61), W_regularizer = l2(reg))(inputs)
@@ -837,7 +837,7 @@ def bn_feature_net_multires_61x61(n_features = 3, n_channels = 2, reg = 1e-5):
 
 
 def feature_net_multires_61x61(n_features = 3, n_channels = 2, reg = 1e-5):
-	print "Using multiresolution feature net 61x61 with batch normalization"
+	print("Using multiresolution feature net 61x61 with batch normalization")
 
 	inputs = Input(shape = (n_channels,61,61))
 	layer1 = Convolution2D(64, 3, 3, init = 'he_normal', border_mode='valid', input_shape=(n_channels, 61, 61), W_regularizer = l2(reg))(inputs)
@@ -885,7 +885,7 @@ def feature_net_multires_61x61(n_features = 3, n_channels = 2, reg = 1e-5):
 	return model
 
 def sparse_feature_net_multires_61x61(batch_input_shape = (1,2,1080,1280), n_features = 3, n_channels = 2, reg = 1e-5, weights_path = None):
-	print "Using multiresolution feature net 61x61"
+	print("Using multiresolution feature net 61x61")
 
 	d = 1
 	inputs = Input(shape = batch_input_shape[1:])
@@ -936,7 +936,7 @@ def sparse_feature_net_multires_61x61(batch_input_shape = (1,2,1080,1280), n_fea
 	return model
 
 def sparse_bn_feature_net_multires_61x61(batch_input_shape = (1,2,1080,1280), n_features = 3, n_channels = 2, reg = 1e-5, weights_path = None):
-	print "Using multiresolution feature net 61x61 with batch normalization"
+	print("Using multiresolution feature net 61x61 with batch normalization")
 
 	d = 1
 	inputs = Input(shape = batch_input_shape[1:])
@@ -997,7 +997,7 @@ def sparse_bn_feature_net_multires_61x61(batch_input_shape = (1,2,1080,1280), n_
 	return model
 
 def bn_feature_net_multires_81x81(n_features = 3, n_channels = 2, reg = 1e-5):
-	print "Using multiresolution feature net 81x81 with batch normalization"
+	print("Using multiresolution feature net 81x81 with batch normalization")
 
 	inputs = Input(shape = (n_channels,81,81))
 	layer1 = Convolution2D(32, 3, 3, init = 'he_normal', border_mode='valid', input_shape=(n_channels, 81, 81), W_regularizer = l2(reg))(inputs)
@@ -1035,7 +1035,7 @@ def bn_feature_net_multires_81x81(n_features = 3, n_channels = 2, reg = 1e-5):
 	norm8 = BatchNormalization(axis = 1)(layer8)
 	act8 = Activation('relu')(norm8)
 
-	
+
 	side_layer1 = Convolution2D(256,32,32, init = 'he_normal', border_mode = 'valid', W_regularizer = l2(reg))(act5)
 	side_norm1 = BatchNormalization(axis = 1)(side_layer1)
 	side_act1 = Activation('relu')(side_norm1)
@@ -1064,7 +1064,7 @@ def bn_feature_net_multires_81x81(n_features = 3, n_channels = 2, reg = 1e-5):
 	return model
 
 def bn_sparse_feature_net_multires_81x81(batch_input_shape = (1,2,1080,1280), n_features = 3, n_channels = 2, reg = 1e-5, weights_path = None):
-	print "Using multiresolution feature net 81x81 with batch normalization"
+	print("Using multiresolution feature net 81x81 with batch normalization")
 
 	inputs = Input(shape = batch_input_shape[1:])
 	d = 1
@@ -1106,7 +1106,7 @@ def bn_sparse_feature_net_multires_81x81(batch_input_shape = (1,2,1080,1280), n_
 	norm8 = BatchNormalization(axis = 1)(layer8)
 	act8 = Activation('relu')(norm8)
 
-	
+
 	side_layer1 = sparse_Convolution2D(256,32,32,d = 2, init = 'he_normal', border_mode = 'valid', W_regularizer = l2(reg))(act5)
 	side_norm1 = BatchNormalization(axis = 1)(side_layer1)
 	side_act1 = Activation('relu')(side_norm1)
@@ -1341,7 +1341,7 @@ def sparse_bn_feature_net_multires_101x101(batch_input_shape = (1,2,1080,1280), 
 	model = set_weights(model, weights_path)
 
 	for layer in model.layers:
-		print layer.name, layer.output_shape
+		print(layer.name, layer.output_shape)
 	return model
 
 """
@@ -1381,7 +1381,7 @@ def siamese_net_51x51(reg = 0.001, drop = 0.5, init = 'he_normal'):
 	return model
 
 def simple_siamese(reg = 0.001, drop = 0.5, init = 'he_normal'):
-	
+
 	seq = Sequential()
 	seq.add(Dense(128, input_shape=(51*51,), activation='relu'))
 	seq.add(Dropout(0.1))
