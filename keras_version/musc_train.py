@@ -13,15 +13,15 @@ import datetime
 import numpy as np
 
 # define a batch size and the number of epochs to run
-batch_size = 512
+batch_size = 256
 n_epoch = 25
 
 # specify names of training set and directory to save model
-dataset = "musc_set1"
-expt = "TESTING_musc_81x81"
+dataset = "musc_81x81_100imgs"
+expt = "20170123_musc_81x81"
 
-direc_save = "/netapp/home/jkimmel/tensorflow/DeepCell/trained_networks/"
-direc_data = "/netapp/home/jkimmel/tensorflow/DeepCell/training_data_npz/"
+direc_save = "/home/jkimmel/src/DeepCell/trained_networks/"
+direc_data = "/media/jkimmel/HDD0/deepstain/musc_tdtomato/"
 
 # Set the optimizer
 # SGD works best for batchnorm nets, while RMSprop seems to be better
@@ -31,14 +31,14 @@ optimizer = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 lr_sched = rate_scheduler(lr = 0.01, decay = 0.95)
 
 
-for iterate in xrange(5):
+for iterate in range(3):
 
     model = the_model(n_channels = 1, n_features = 2, reg = 1e-5)
 
-    train_model_sample(model = model, dataset = dataset, optimizer = optimizer, 
+    train_model_sample(model = model, dataset = dataset, optimizer = optimizer,
         expt = expt, it = iterate, batch_size = batch_size, n_epoch = n_epoch,
-        direc_save = direc_save, 
-        direc_data = direc_data, 
+        direc_save = direc_save,
+        direc_data = direc_data,
         lr_sched = lr_sched,
         rotate = True, flip = True, shear = False)
 
@@ -48,9 +48,3 @@ for iterate in xrange(5):
     from keras.backend.common import _UID_PREFIXES
     for key in _UID_PREFIXES.keys():
         _UID_PREFIXES[key] = 0
-
-
-
-
-
-
