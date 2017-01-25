@@ -161,7 +161,7 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, m
 
     return channels
 
-def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, max_direcs = 100):
+def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, max_direcs = 100, invert=True):
     '''
     Parameters
     ----------
@@ -238,7 +238,7 @@ def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, 
             # weird color map bug in skimage / tifffile lib leads to inversion
             # of binary tiff's exported from matlab
             # https://github.com/scikit-image/scikit-image/issues/1940
-            feature_img = get_image(feature_file, invert = True)
+            feature_img = get_image(feature_file, invert = invert)
 
             if np.sum(feature_img) > 0:
                 feature_img /= np.amax(feature_img)
@@ -292,10 +292,11 @@ def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50
 
     Parameters
     ----------
-    feature_mask : ndarray.
+    feature_mask : ndarray of booleans.
         4-dimensional ndarray of images with the following format
         feature_mask.shape = [directory_number, feature_number, mask_x, mask_y]
         where the final feature_number is the background class.
+        using a boolean array for masks is important to limit memory use.
     min_num : integer.
         minimum number of pixels in a feature, i.e. the smallest class.
         used to class balance the training pixels.
@@ -334,11 +335,14 @@ def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50
     # init empty feature matrix
     all_feature_mat = np.zeros([4, min_num * feature_mask.shape[1]])
     for feature in range(feature_mask.shape[1]):
-        one_feature_mat = np.array([])
+        batch_mat_list = []
         for batch in range(feature_mask.shape[0]):
             feature_rows_temp, feature_cols_temp = np.where(feature_mask_trimmed[batch,feature,:,:] == 1)
             batch_mat = np.vstack([feature_rows_temp, feature_cols_temp, np.repeat(batch, len(feature_rows_temp)), np.repeat(feature, len(feature_rows_temp))])
-            one_feature_mat = np.hstack([one_feature_mat, batch_mat]) if one_feature_mat.size else batch_mat
+            batch_mat_list.append(batch_mat)
+            print(batch)
+        one_feature_mat = np.concatenate(batch_mat_list, axis = 1)
+        del batch_mat_list # clear arrays from memory
         # shuffle columns of one_feature_mat to avoid clipping sample diversity
         idx = np.arange(one_feature_mat.shape[1])
         rand_idx = np.random.choice(idx, size=len(idx), replace=False)
@@ -356,15 +360,17 @@ def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50
         all_feature_mat = all_feature_mat[:,rand_idx]
         all_feature_mat = all_feature_mat[:,:max_training_examples]
 
+    '''
     feature_rows = np.array(all_feature_mat[0,:], dtype = 'int32')
     feature_cols = np.array(all_feature_mat[1,:], dtype = 'int32')
     feature_batch = np.array(all_feature_mat[2,:], dtype = 'int32')
     feature_label = np.array(all_feature_mat[3,:], dtype = 'int32')
-
-
     return feature_rows, feature_cols, feature_batch, feature_label
+    '''
 
-def save_training_data(file_name_save, channels, feature_rows, feature_cols, feature_batch, feature_label, window_x=50, window_y=50):
+    return all_feature_mat.astype('int32')
+
+def save_training_data(file_name_save, channels, feature_matrix, window_x=50, window_y=50):
     '''
     Saves training data in an NPZ structure.
 
@@ -375,15 +381,14 @@ def save_training_data(file_name_save, channels, feature_rows, feature_cols, fea
     channels : ndarray.
         4-dimensional ndarray of images with the following format
         channels.shape = [directory_number, channel_number, img_x, img_y]
-    feature_rows : list of integers.
-        row indices for pixels to train on.
-    feature_cols : list of integers.
-        col indices for pixels to train on.
-    feature_batch : list of integers.
-        batch indices for pixels to train on. Only neccessary if subdirectories
-        in the training directory are utilized.
-    feature_label : list of integers.
-        ground truth class labels for pixels to train on.
+    feature_matrix : ndarray of integers.
+        4 x N array of training pixel locations, batch numbers, and labels.
+            Layout:
+            rows -- row indices for pixels to train on.
+            cols -- col indices for pixels to train on.
+            batch -- batch indices for pixels to train on. Only neccessary if subdirectories
+                        in the training directory are utilized.
+            labels -- ground truth class labels for pixels to train on.
     window_x : integer, optional.
             number of pixels on either side of the interrogated pixel to
             sample for classification in X.
@@ -397,8 +402,8 @@ def save_training_data(file_name_save, channels, feature_rows, feature_cols, fea
     '''
 
 
-    np.savez(file_name_save, channels = channels, y = feature_label,
-            batch = feature_batch, pixels_x = feature_rows,
-            pixels_y = feature_cols, win_x = window_x, win_y = window_y)
+    np.savez(file_name_save, channels = channels, y = feature_matrix[3,:],
+            batch = feature_matrix[2,:], pixels_x = feature_matrix[0,:],
+            pixels_y = feature_matrix[1,:], win_x = window_x, win_y = window_y)
 
     return

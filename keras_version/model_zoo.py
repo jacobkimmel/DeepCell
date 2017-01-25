@@ -623,7 +623,7 @@ def bn_feature_net_81x81(n_features = 2, n_channels = 1, reg = 1e-5, init = 'he_
 
 	return model
 
-def sparse_bn_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features = 3, reg = 1e-5, init = 'he_normal', weights_path = None):
+def sparse_bn_feature_net_81x81(batch_input_shape = (1,1,2048,2048), n_features = 3, reg = 1e-5, init = 'he_normal', weights_path = None):
 
 	model = Sequential()
 
@@ -635,7 +635,7 @@ def sparse_bn_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 4, 4, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
+	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d))) # 1024
 
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
@@ -649,7 +649,7 @@ def sparse_bn_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
+	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d))) # 512
 
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode='valid', W_regularizer = l2(reg)))
@@ -659,7 +659,7 @@ def sparse_bn_feature_net_81x81(batch_input_shape = (1,2,1080,1280), n_features 
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))
 	model.add(BatchNormalization(axis = 1))
 	model.add(Activation('relu'))
-	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d)))
+	model.add(sparse_MaxPooling2D(pool_size=(2, 2), strides = (d,d))) # 256
 
 	d *= 2
 	model.add(sparse_Convolution2D(64, 3, 3, d = d, init = init, border_mode = 'valid', W_regularizer = l2(reg)))

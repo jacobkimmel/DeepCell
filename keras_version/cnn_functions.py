@@ -20,7 +20,7 @@ import re
 import numpy as np
 import tifffile as tiff
 from numpy.fft import fft2, ifft2, fftshift
-from skimage.io import imread
+from skimage.io import imread, imsave
 from scipy import ndimage
 import threading
 from scipy import linalg
@@ -199,21 +199,23 @@ def combinations(array):
 
     return comb, np.array(list(y))
 
-def process_image(channel_img, win_x, win_y, std = False):
+def process_image(channel_img, win_x, win_y, std = False, pad=None):
     if std:
         avg_kernel = np.ones((2*win_x + 1, 2*win_y + 1))
         channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
         std = np.std(channel_img)
         channel_img /= std
-        return channel_img
-
     else:
         p50 = np.percentile(channel_img, 50)
         channel_img /= p50
         avg_kernel = np.ones((2*win_x + 1, 2*win_y + 1))
         channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
 
-        return channel_img
+    if pad:
+        channel_imgP = np.pad(channel_img, pad_width=pad, mode='reflect')
+        return channel_imgP
+
+    return channel_img
 
 def tensorprod_softmax(x):
     e_output = T.exp(x - x.max(axis = 1, keepdims=True))
@@ -1138,6 +1140,10 @@ class sparse_MaxPooling2D(Layer):
         return dict(list(base_config.items()) + list(config.items()))
 
 class TensorProd2D(Layer):
+    '''
+    Implements a dot product multiplication of an input matrix and
+    a set of weights, producing an output of specified dimensions
+    '''
     def __init__(self, input_dim, output_dim,
                  init='glorot_uniform', activation='linear', weights=None,
                  border_mode='valid', subsample=(1, 1), dim_ordering=K.image_dim_ordering(),
@@ -1414,14 +1420,17 @@ def get_images_from_directory(data_location, channel_names):
 
     return all_images
 
-def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, process = True):
+def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, process = True, pad = None):
+    if pad:
+        image = np.pad(image, pad_width = pad, mode = 'reflect')
+
     if process:
         for j in range(image.shape[1]):
-            image[0,j,:,:] = process_image(image[0,j,:,:], win_x, win_y, std)
+            image[0,j,:,:] = process_image(image[0,j,:,:], win_x, win_y, std, pad = pad)
 
     if split:
-        image_size_x = image.shape[2]/2
-        image_size_y = image.shape[3]/2
+        image_size_x = int(image.shape[2]/2)
+        image_size_y = int(image.shape[3]/2)
     else:
         image_size_x = image.shape[2]
         image_size_y = image.shape[3]
@@ -1434,7 +1443,7 @@ def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, p
     n_features = model.layers[-1].output_shape[1]
 
     if split:
-        model_output = np.zeros((n_features,2*image_size_x-win_x*2, 2*image_size_y-win_y*2), dtype = 'float32')
+        model_output = np.zeros((int(n_features),int(2*image_size_x-win_x*2), int(2*image_size_y-win_y*2)), dtype = 'float32')
 
         img_0 = image[:,:, 0:image_size_x+win_x, 0:image_size_y+win_y]
         img_1 = image[:,:, 0:image_size_x+win_x, image_size_y-win_y:]
@@ -1453,7 +1462,7 @@ def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, p
     model_output = np.pad(model_output, pad_width = [(0,0), (win_x, win_x),(win_y,win_y)], mode = 'constant', constant_values = [(0,0), (0,0), (0,0)])
     return model_output
 
-def run_model_on_directory(data_location, channel_names, output_location, model, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True):
+def run_model_on_directory(data_location, channel_names, output_location, model, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None):
     n_features = model.layers[-1].output_shape[1]
     counter = 0
 
@@ -1462,7 +1471,7 @@ def run_model_on_directory(data_location, channel_names, output_location, model,
 
     for image in image_list:
         print("Processing image " + str(counter + 1) + " of " + str(len(image_list)))
-        processed_image = run_model(image, model, win_x = win_x, win_y = win_y, std = std, split = split, process = process)
+        processed_image = run_model(image, model, win_x = win_x, win_y = win_y, std = std, split = split, process = process, pad = pad)
         processed_image_list += [processed_image]
 
         # Save images
@@ -1475,7 +1484,7 @@ def run_model_on_directory(data_location, channel_names, output_location, model,
 
     return processed_image_list
 
-def run_models_on_directory(data_location, channel_names, output_location, model_fn, list_of_weights, n_features = 3, image_size_x = 1080, image_size_y = 1280, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True):
+def run_models_on_directory(data_location, channel_names, output_location, model_fn, list_of_weights, n_features = 3, image_size_x = 1080, image_size_y = 1280, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None):
 
     batch_input_shape = (1,len(channel_names),image_size_x+win_x, image_size_y+win_y)
     model = model_fn(batch_input_shape = batch_input_shape, n_features = n_features, weights_path = list_of_weights[0])
@@ -1484,7 +1493,7 @@ def run_models_on_directory(data_location, channel_names, output_location, model
     model_outputs = []
     for weights_path in list_of_weights:
         model = set_weights(model, weights_path = weights_path)
-        processed_image_list= run_model_on_directory(data_location, channel_names, output_location, model, win_x = win_x, win_y = win_y, save = False, std = std, split = split, process = process)
+        processed_image_list= run_model_on_directory(data_location, channel_names, output_location, model, win_x = win_x, win_y = win_y, save = False, std = std, split = split, process = process, pad = pad)
         model_outputs += [np.stack(processed_image_list, axis = 0)]
 
     # Average all images
@@ -1496,8 +1505,9 @@ def run_models_on_directory(data_location, channel_names, output_location, model
         for img in range(model_output.shape[0]):
             for feat in range(n_features):
                 feature = model_output[img,feat,:,:]
-                cnnout_name = os.path.join(output_location, 'feature_' + str(feat) + "_frame_" + str(img) + r'.tif')
-                tiff.imsave(cnnout_name,feature)
+                # use skimage.io's imsave to output lossless pngs
+                cnnout_name = os.path.join(output_location, 'feature_' + str(feat) + "_frame_" + str(img) + r'.png')
+                imsave(cnnout_name,feature)
 
     from keras.backend.common import _UID_PREFIXES
     for key in _UID_PREFIXES:
