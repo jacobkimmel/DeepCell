@@ -13,6 +13,7 @@ from cnn_functions import get_image
 import glob
 import os
 import fnmatch
+import multiprocessing
 
 def gauss_filter_2D(shape=(8,8),sigma=2):
     """
@@ -40,6 +41,39 @@ def gauss_filter_2D(shape=(8,8),sigma=2):
     if sumh != 0:
         h /= sumh
     return h
+
+def process_channel_img(channel_file, norm='median', smooth='average', window_x = 40, window_y = 40):
+    '''
+    Processes channel images by normalization and smoothing with a kernel
+
+    Parameters
+    ----------
+    channel_file : string. path to an image file.
+    norm : string. 'median' or 'mean'
+    smooth : 'average' or 'gaussian'
+
+    Returns
+    -------
+    channel_img : ndarray. processed image.
+    '''
+    channel_img = get_image(channel_file)
+    # normalize the image
+    if norm == 'median':
+        norm_coeff = np.percentile(channel_img, 50)
+    else:
+        norm_coeff = np.mean(channel_img)
+    channel_img /= norm_coeff
+
+    # Convolute with a smoothing kernel and subtract from the image
+    # to remove local noise at window scale
+    if smooth == 'average':
+        avg_kernel = np.ones((2*window_x + 1, 2*window_y + 1))
+        channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
+    else:
+        sigma = 2
+        gauss_kernal = gauss_filter_2D((2*window_x + 1, 2*window_y + 1), sigma = sigma)
+        channel_img -= ndimage.convolve(channel_img, gauss_kernel)
+    return channel_img
 
 def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, max_direcs = 100, norm = "median", smooth = "average"):
     '''
@@ -130,36 +164,17 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, m
         # direc_counter is actually a 'unique FOV counter'
         # but van valen's parlance is maintained
         direc_counter = 0
-        for img in imglist_channel:
-            # check if filename has the name of the channel in it
-            channel_file = img # glob returns full file paths
-            channel_img = get_image(channel_file)
 
-            # Normalize the images
-            if norm == 'median':
-                norm_coeff = np.percentile(channel_img, 50)
-            else:
-                norm_coeff = np.mean(channel_img)
-            channel_img /= norm_coeff
+        # use multiprocessing pool to map function in parallel
+        with multiprocessing.Pool() as pool:
+            processed = list(pool.map(process_channel_img, imglist_channel))
 
-            # Convolute with a smoothing kernel and subtract from the image
-            # to remove local noise at window scale
-            if smooth == 'average':
-                avg_kernel = np.ones((2*window_x + 1, 2*window_y + 1))
-                channel_img -= ndimage.convolve(channel_img, avg_kernel)/avg_kernel.size
-            else:
-                sigma = 2
-                gauss_kernal = gauss_filter_2D((2*window_x + 1, 2*window_y + 1), sigma = sigma)
-                channel_img -= ndimage.convolve(channel_img, gauss_kernel)
-
-
-            # set channel image as the final two dimensions in a 4D ndarray
-            channels[direc_counter,channel_counter,:,:] = channel_img
-            direc_counter += 1
-            print(direc_counter)
+        channels[:,channel_counter,:,:] = processed
         channel_counter += 1
 
     return channels
+
+
 
 def load_feature_masks(direc_name, feature_names, window_x = 50, window_y = 50, max_direcs = 100, invert=True):
     '''

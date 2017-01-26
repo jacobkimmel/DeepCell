@@ -14,7 +14,7 @@ import numpy as np
 
 # define a batch size and the number of epochs to run
 batch_size = 256
-n_epoch = 25
+n_epoch = 50
 
 # specify names of training set and directory to save model
 dataset = "musc_81x81_100imgs"
@@ -31,7 +31,7 @@ optimizer = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 lr_sched = rate_scheduler(lr = 0.01, decay = 0.95)
 
 
-for iterate in range(1,4):
+for iterate in range(4,5):
 
     model = the_model(n_channels = 1, n_features = 2, reg = 1e-5)
 

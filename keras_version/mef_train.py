@@ -4,6 +4,7 @@ Train CNNs for semantic segmentation of MEF nuclei
 
 from __future__ import print_function
 from keras.optimizers import SGD, RMSprop
+from keras.callbacks import EarlyStopping
 
 from cnn_functions import rate_scheduler, train_model_sample
 from model_zoo import bn_feature_net_81x81 as the_model
@@ -29,9 +30,9 @@ direc_data = "/media/jkimmel/HDD0/deepstain/mef_nuclei/"
 
 optimizer = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
 lr_sched = rate_scheduler(lr = 0.01, decay = 0.95)
+early_stopping = EarlyStopping(monitor='val_acc', patience=2)
 
-
-for iterate in range(0,3):
+for iterate in range(1,4):
 
     model = the_model(n_channels = 1, n_features = 2, reg = 1e-5)
 
@@ -40,7 +41,7 @@ for iterate in range(0,3):
         direc_save = direc_save,
         direc_data = direc_data,
         lr_sched = lr_sched,
-        rotate = True, flip = True, shear = False)
+        rotate = True, flip = True, shear = False, early_stopping=True)
 
     del model
     # reset the keras numbering scheme to ensure layers are named properly
