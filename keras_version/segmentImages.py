@@ -71,6 +71,7 @@ predictions = run_models_on_directory(
         output_location=seg_location,
         model_fn = fnet,
         list_of_weights = list_of_cyto_weights,
+        n_features = 2,
         image_size_x = image_size_x,
         image_size_y = image_size_y,
         win_x = window_x,

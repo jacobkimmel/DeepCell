@@ -95,7 +95,7 @@ def sparse_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features = 3
 
 	return model
 
-def feature_net_61x61(n_features = 3, n_channels = 2, reg = 0.001, drop = 0.5, init = 'he_normal'):
+def feature_net_61x61(n_features = 2, n_channels = 1, reg = 0.001, drop = 0.5, init = 'he_normal'):
 	print("Using feature net 61x61")
 
 	model = Sequential()
@@ -476,7 +476,7 @@ def sparse_bn_feature_net_31x31(batch_input_shape = (1,1,1080,1280), n_features 
 
 	return model
 
-def bn_feature_net_61x61(n_features = 3, n_channels = 2, reg = 1e-5, init = 'he_normal'):
+def bn_feature_net_61x61(n_features = 2, n_channels = 1, reg = 1e-5, init = 'he_normal'):
 	print("Using feature net 61x61 with batch normalization")
 	model = Sequential()
 	model.add(Convolution2D(64, 3, 3, init = init, border_mode='valid', input_shape=(n_channels, 61, 61), W_regularizer = l2(reg)))
@@ -623,7 +623,7 @@ def bn_feature_net_81x81(n_features = 2, n_channels = 1, reg = 1e-5, init = 'he_
 
 	return model
 
-def sparse_bn_feature_net_81x81(batch_input_shape = (1,1,2048,2048), n_features = 3, reg = 1e-5, init = 'he_normal', weights_path = None):
+def sparse_bn_feature_net_81x81(batch_input_shape = (1,1,2048,2048), n_features = 2, reg = 1e-5, init = 'he_normal', weights_path = None):
 
 	model = Sequential()
 

@@ -335,26 +335,32 @@ def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50
         in the training directory are utilized.
     feature_label : list of integers.
         ground truth class labels for pixels to train on.
+
+    Notes
+    -----
+    Casts all arrays to bool or int16 as appropriate to handle memory
+    This is kosher, since all the indices should fit in a 16bit int
+    (2**16) = 65,536, so a 4294 megapixel image !
     '''
 
     # typecast min_num
     min_num = int(min_num)
 
     # make a set of masks with the edge features removed
-    feature_mask_trimmed = np.copy(feature_mask)
+    feature_mask_trimmed = np.copy(feature_mask).astype('bool')
     feature_mask_trimmed[:,:,:window_x+1,:] = 0
     feature_mask_trimmed[:,:,-window_x-1:,:] = 0
     feature_mask_trimmed[:,:,:,:window_y+1] = 0
     feature_mask_trimmed[:,:,:,-window_y-1:] = 0
 
     # init empty feature matrix
-    all_feature_mat = np.zeros([4, min_num * feature_mask.shape[1]])
+    all_feature_mat = np.zeros([4, min_num * feature_mask.shape[1]]).astype('int16')
     for feature in range(feature_mask.shape[1]):
         batch_mat_list = []
         for batch in range(feature_mask.shape[0]):
             feature_rows_temp, feature_cols_temp = np.where(feature_mask_trimmed[batch,feature,:,:] == 1)
             batch_mat = np.vstack([feature_rows_temp, feature_cols_temp, np.repeat(batch, len(feature_rows_temp)), np.repeat(feature, len(feature_rows_temp))])
-            batch_mat_list.append(batch_mat)
+            batch_mat_list.append(batch_mat.astype('int16'))
             print(batch)
         one_feature_mat = np.concatenate(batch_mat_list, axis = 1)
         del batch_mat_list # clear arrays from memory

@@ -1488,7 +1488,7 @@ def run_model_on_directory(data_location, channel_names, output_location, model,
 
     return processed_image_list
 
-def run_models_on_directory(data_location, channel_names, output_location, model_fn, list_of_weights, n_features = 3, image_size_x = 1080, image_size_y = 1280, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None):
+def run_models_on_directory(data_location, channel_names, output_location, model_fn, list_of_weights, n_features = 2, image_size_x = 1080, image_size_y = 1280, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None):
 
     batch_input_shape = (1,len(channel_names),image_size_x+win_x, image_size_y+win_y)
     model = model_fn(batch_input_shape = batch_input_shape, n_features = n_features, weights_path = list_of_weights[0])
