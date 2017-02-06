@@ -1475,6 +1475,7 @@ def run_model_on_directory(data_location, channel_names, output_location, model,
 
     for image in image_list:
         print("Processing image " + str(counter + 1) + " of " + str(len(image_list)))
+        print("Time : ", datetime.datetime.time(datetime.datetime.now()))
         processed_image = run_model(image, model, win_x = win_x, win_y = win_y, std = std, split = split, process = process, pad = pad)
         processed_image_list += [processed_image]
 

@@ -10,7 +10,7 @@ import numpy as np
 import argparse
 
 from cnn_functions import nikon_getfiles, get_image, run_models_on_directory, get_image_sizes, dice_jaccard_indices
-from model_zoo import sparse_bn_feature_net_81x81 as fnet
+from model_zoo import sparse_bn_feature_net_61x61 as fnet
 
 # set argparsing
 parser = argparse.ArgumentParser('Segment images using trained CNNs')
