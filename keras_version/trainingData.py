@@ -8,7 +8,7 @@ from skimage import morphology as morph
 import skimage as sk
 import scipy as sp
 from scipy import ndimage
-from skimage import feature
+from skimage import feature, transform
 from cnn_functions import get_image
 import glob
 import os
@@ -169,7 +169,10 @@ def load_channel_imgs(direc_name, channel_names, window_x = 50, window_y = 50, m
         with multiprocessing.Pool() as pool:
             processed = list(pool.map(process_channel_img, imglist_channel))
 
-        channels[:,channel_counter,:,:] = processed
+        pA = np.dstack(processed)
+        pA = np.rollaxis(pA, -1)
+        pA = np.reshape(pA, (pA.shape[0], 1, pA.shape[1], pA.shape[2]))
+        channels[:,channel_counter,:,:] = pA[:,0,:,:]
         channel_counter += 1
 
     return channels
@@ -381,14 +384,6 @@ def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50
         all_feature_mat = all_feature_mat[:,rand_idx]
         all_feature_mat = all_feature_mat[:,:max_training_examples]
 
-    '''
-    feature_rows = np.array(all_feature_mat[0,:], dtype = 'int32')
-    feature_cols = np.array(all_feature_mat[1,:], dtype = 'int32')
-    feature_batch = np.array(all_feature_mat[2,:], dtype = 'int32')
-    feature_label = np.array(all_feature_mat[3,:], dtype = 'int32')
-    return feature_rows, feature_cols, feature_batch, feature_label
-    '''
-
     return all_feature_mat.astype('int32')
 
 def save_training_data(file_name_save, channels, feature_matrix, window_x=50, window_y=50):
@@ -427,4 +422,21 @@ def save_training_data(file_name_save, channels, feature_matrix, window_x=50, wi
             batch = feature_matrix[2,:], pixels_x = feature_matrix[0,:],
             pixels_y = feature_matrix[1,:], win_x = window_x, win_y = window_y)
 
+    return
+
+def split_rgb(fname, resize_img=None):
+    '''
+    Parameters
+    ----------
+    fname : string.
+        location of image file to be split.
+    resize_img : tuple, optional.
+        2D tuple of integers for resizing of saved images.
+    '''
+    I = imread(fname)
+    for i in range(I.shape[2]):
+        chan = I[:,:,i]
+        if resize_img:
+            chan = sp.misc.imresize(chan, resize_img)
+        imsave(fname[:-4] + 'c' + str(i) + '.png', chan.astype('uint16'))
     return
