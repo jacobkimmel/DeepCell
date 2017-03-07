@@ -10,13 +10,13 @@ import numpy as np
 import argparse
 
 from cnn_functions import nikon_getfiles, get_image, run_models_on_directory, get_image_sizes, dice_jaccard_indices
-from model_zoo import sparse_bn_feature_net_61x61 as fnet
+from model_zoo import sparse_bn_feature_net_81x81 as fnet
 
 # set argparsing
 parser = argparse.ArgumentParser('Segment images using trained CNNs')
 parser.add_argument('data_dir', action='store', default=['./'], help = 'Path to raw images')
 parser.add_argument('output_dir', action='store', default=['./'], help = 'Output path for segmented images')
-parser.add_argument('--channel_names', action='store', default=['DIC'], help = 'String designating raw image filenames')
+parser.add_argument('--channel_names', action='store', default=['DIC'], nargs='+', help = 'String designating raw image filenames')
 parser.add_argument('--net_dir', action='store', default=['./'], help = 'Path to network weights')
 parser.add_argument('--net_prefix', action='store', default=['net'], help = 'Prefix of network weights files')
 parser.add_argument('--nb_networks', action='store', default=1, help = 'Number of networks to be ensembled')
@@ -27,7 +27,7 @@ data_location = str(args.data_dir)
 print("Data location: ", data_location)
 seg_location = str(args.output_dir)
 print("Output location: ", seg_location)
-channel_names = [str(args.channel_names)]
+channel_names = args.channel_names
 print("Channel names: ", channel_names)
 trained_network_dir = str(args.net_dir)
 print("Network location: ", trained_network_dir)
@@ -56,7 +56,9 @@ nb_networks = 1 # number of trained networks to ensemble
 '''
 # set window sizes
 window_x, window_y = window_sz, window_sz
-image_size_x, image_size_y = get_image_sizes(data_location, channel_names[0])
+sz = list(get_image_sizes(data_location, channel_names[0]))
+image_size_x = sz[0]
+image_size_y = sz[1]
 
 # create a list of weights from all trained networks
 list_of_cyto_weights = []
@@ -76,4 +78,5 @@ predictions = run_models_on_directory(
         image_size_y = image_size_y,
         win_x = window_x,
         win_y = window_y,
-        split = True)
+        split = 2,
+        rgb = True)

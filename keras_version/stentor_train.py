@@ -14,12 +14,12 @@ import datetime
 import numpy as np
 
 # define a batch size and the number of epochs to run
-batch_size = 256
+batch_size = 312
 n_epoch = 30
 
 # specify names of training set and directory to save model
-dataset = "stentor_training"
-expt = "20170227_stentor_81x81"
+dataset = "stentor_z1"
+expt = "20170227_stentor_81x81_z1"
 
 direc_save = "/home/jkimmel/src/DeepCell/trained_networks/"
 direc_data = "/media/jkimmel/HDD0/stentor/"

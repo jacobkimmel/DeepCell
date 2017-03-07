@@ -426,12 +426,19 @@ def save_training_data(file_name_save, channels, feature_matrix, window_x=50, wi
 
 def split_rgb(fname, resize_img=None):
     '''
+    Splits an rgb image and saves each channel as a separate image file
+    in the same source directory as the original image.
+    
     Parameters
     ----------
     fname : string.
         location of image file to be split.
     resize_img : tuple, optional.
         2D tuple of integers for resizing of saved images.
+
+    Returns
+    -------
+    None
     '''
     I = imread(fname)
     for i in range(I.shape[2]):

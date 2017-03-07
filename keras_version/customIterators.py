@@ -93,69 +93,6 @@ class NumpyArrayIterator(Iterator):
         batch_y = self.y[index_array]
         return batch_x, batch_y
 
-class SiameseNumpyArrayIterator(Iterator):
-
-    def __init__(self, train_dict, image_data_generator,
-                 batch_size=32, shuffle=False, seed=None,
-                 dim_ordering=K.image_dim_ordering(),
-                 save_to_dir=None, save_prefix='', save_format='jpeg'):
-        if train_dict["labels"] is not None and len(train_dict["ids"]) != len(train_dict["labels"]):
-            raise Exception('ids (location of pairs of images) and y (labels) '
-                            'should have the same length. '
-                            'Found: ids.shape = %s, y.shape = %s' % (np.asarray(train_dict["ids"]).shape, np.asarray(train_dict["labels"]).shape))
-        self.X = train_dict["image_list"]
-        self.ids = train_dict["ids"]
-        self.y = train_dict["labels"]
-        self.image_data_generator = image_data_generator
-        self.dim_ordering = dim_ordering
-        self.save_to_dir = save_to_dir
-        self.save_prefix = save_prefix
-        self.save_format = save_format
-        super(SiameseNumpyArrayIterator, self).__init__(len(train_dict["ids"]), batch_size, shuffle, seed)
-
-    def next(self):
-        # for python 2.x.
-        # Keeps under lock only the mechanism which advances
-        # the indexing of each batch
-        # see http://anandology.com/blog/using-iterators-and-generators/
-        with self.lock:
-            index_array, current_index, current_batch_size = next(self.index_generator)
-        # The transformation of images is not under thread lock so it can be done in parallel
-        batch_x1 = np.zeros(tuple([current_batch_size] + list(self.X.shape)[1:]))
-        batch_x2 = np.zeros(tuple([current_batch_size] + list(self.X.shape)[1:]))
-        for i, j in enumerate(index_array):
-            ind = self.ids[j]
-            x1 = self.X[ind[0]]
-            x1 = self.image_data_generator.random_transform(x1.astype('float32'))
-            x1 = self.image_data_generator.standardize(x1)
-
-            x2 = self.X[ind[1]]
-            x2 = self.image_data_generator.random_transform(x2.astype('float32'))
-            x2 = self.image_data_generator.standardize(x2)
-
-            batch_x1[i] = x1
-            batch_x2[i] = x2
-        if self.save_to_dir:
-            for i in range(current_batch_size):
-                img = array_to_img(batch_x1[i], self.dim_ordering, scale=True)
-                fname = '{prefix}_{index}_{hash}.{format}'.format(prefix=self.save_prefix +'1',
-                                                                  index=current_index + i,
-                                                                  hash=np.random.randint(1e4),
-                                                                  format=self.save_format)
-                img.save(os.path.join(self.save_to_dir, fname))
-
-                img = array_to_img(batch_x2[i], self.dim_ordering, scale=True)
-                fname = '{prefix}_{index}_{hash}.{format}'.format(prefix=self.save_prefix +'2',
-                                                                  index=current_index + i,
-                                                                  hash=np.random.randint(1e4),
-                                                                  format=self.save_format)
-                img.save(os.path.join(self.save_to_dir, fname))
-        if self.y is None:
-            return {'input_1': batch_x1, 'input_2': batch_x2}
-        batch_y = self.y[index_array]
-        return {'input_1': batch_x1, 'input_2': batch_x2}, {'lambda_1': batch_y}
-
-
 class ImageSampleArrayIterator(Iterator):
 
     def __init__(self, train_dict, image_data_generator,

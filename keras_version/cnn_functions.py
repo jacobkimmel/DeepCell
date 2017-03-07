@@ -1424,6 +1424,52 @@ def get_images_from_directory(data_location, channel_names):
 
     return all_images
 
+def get_images_rgb(data_location, identifier):
+    '''
+    Imports multichannel RGB images and rolls the axis to conform with Theano
+    image dim ordering conventions
+    (batch, channel, x, y)
+
+    Parameters
+    ----------
+    data_location : dir containing images
+    identifier : string contained in all image filenames
+
+    Returns
+    -------
+    all_images : list of numpy arrays of images
+    '''
+
+    image_list = glob.glob(os.path.join(data_location, '*' + identifier + '*'))
+    all_images = []
+
+    for i in range(len(image_list)):
+        img = get_image(image_list[i]) # glob returns full file names by default
+        imgR = np.rollaxis(img, -1)
+        imgR = np.reshape(imgR, (1, imgR.shape[0], imgR.shape[1], imgR.shape[2]))
+        all_images.append(imgR)
+
+    return all_images
+
+def split_img(image):
+    image_size_x = int(image.shape[2]/2)
+    image_size_y = int(image.shape[3]/2)
+
+    model_output = np.zeros((int(n_features),int(2*image_size_x-win_x*2), int(2*image_size_y-win_y*2)), dtype = 'float32')
+
+    img_0 = image[:,:, 0:image_size_x+win_x, 0:image_size_y+win_y]
+    img_1 = image[:,:, 0:image_size_x+win_x, image_size_y-win_y:]
+    img_2 = image[:,:, image_size_x-win_x:, 0:image_size_y+win_y]
+    img_3 = image[:,:, image_size_x-win_x:, image_size_y-win_y:]
+
+    model_output[:, 0:image_size_x-win_x, 0:image_size_y-win_y] = evaluate_model([img_0, 0])[0]
+    model_output[:, 0:image_size_x-win_x, image_size_y-win_y:] = evaluate_model([img_1, 0])[0]
+    model_output[:, image_size_x-win_x:, 0:image_size_y-win_y] = evaluate_model([img_2, 0])[0]
+    model_output[:, image_size_x-win_x:, image_size_y-win_y:] = evaluate_model([img_3, 0])[0]
+
+    return model_output
+
+
 def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, process = True, pad = None):
     if pad:
         image = np.pad(image, pad_width = pad, mode = 'reflect')
@@ -1432,13 +1478,6 @@ def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, p
         for j in range(image.shape[1]):
             image[0,j,:,:] = process_image(image[0,j,:,:], win_x, win_y, std, pad = pad)
 
-    if split:
-        image_size_x = int(image.shape[2]/2)
-        image_size_y = int(image.shape[3]/2)
-    else:
-        image_size_x = image.shape[2]
-        image_size_y = image.shape[3]
-
     evaluate_model = K.function(
         [model.layers[0].input, K.learning_phase()],
         [model.layers[-1].output]
@@ -1446,7 +1485,10 @@ def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, p
 
     n_features = model.layers[-1].output_shape[1]
 
-    if split:
+    if split==1:
+        image_size_x = int(image.shape[2]/2)
+        image_size_y = int(image.shape[3]/2)
+
         model_output = np.zeros((int(n_features),int(2*image_size_x-win_x*2), int(2*image_size_y-win_y*2)), dtype = 'float32')
 
         img_0 = image[:,:, 0:image_size_x+win_x, 0:image_size_y+win_y]
@@ -1459,18 +1501,77 @@ def run_model(image, model, win_x = 30, win_y = 30, std = False, split = True, p
         model_output[:, image_size_x-win_x:, 0:image_size_y-win_y] = evaluate_model([img_2, 0])[0]
         model_output[:, image_size_x-win_x:, image_size_y-win_y:] = evaluate_model([img_3, 0])[0]
 
+    if split==2:
+        '''
+        16 tiles
+
+        0  1  2  3
+        4  5  6  7
+        8  9  10 11
+        12 13 14 15
+        '''
+        image_size_x = int(image.shape[2]/4)
+        image_size_y = int(image.shape[3]/4)
+        model_output = np.zeros((int(n_features),int(4*image_size_x-win_x*2), int(4*image_size_y-win_y*2)), dtype = 'float32')
+
+        img_0 = image[:,:, 0:image_size_x + win_x, 0:image_size_y + win_y]
+        img_1 = image[:,:, image_size_x-win_x:2*image_size_x+win_x, 0:image_size_y + win_y]
+        img_2 = image[:,:, 2*image_size_x-win_x:3*image_size_x+win_x, 0:image_size_y + win_y]
+        img_3 = image[:,:, 3*image_size_x-win_x:4*image_size_x, 0:image_size_y + win_y]
+
+        img_4 = image[:,:, 0:image_size_x + win_x, image_size_y-win_y:2*image_size_y + win_y]
+        img_5 = image[:,:, image_size_x-win_x:2*image_size_x+win_x, image_size_y-win_y:2*image_size_y + win_y]
+        img_6 = image[:,:, 2*image_size_x-win_x:3*image_size_x+win_x, image_size_y-win_y:2*image_size_y + win_y]
+        img_7 = image[:,:, 3*image_size_x-win_x:4*image_size_x, image_size_y-win_y:2*image_size_y + win_y]
+
+        img_8 = image[:,:, 0:image_size_x + win_x, 2*image_size_y-win_y:3*image_size_y + win_y]
+        img_9 = image[:,:, image_size_x-win_x:2*image_size_x+win_x, 2*image_size_y-win_y:3*image_size_y + win_y]
+        img_10 = image[:,:, 2*image_size_x-win_x:3*image_size_x+win_x, 2*image_size_y-win_y:3*image_size_y + win_y]
+        img_11 = image[:,:, 3*image_size_x-win_x:4*image_size_x, 2*image_size_y-win_y:3*image_size_y + win_y]
+
+        img_12 = image[:,:, 0:image_size_x + win_x, 3*image_size_y-win_y:4*image_size_y]
+        img_13 = image[:,:, image_size_x-win_x:2*image_size_x+win_x, 3*image_size_y-win_y:4*image_size_y]
+        img_14 = image[:,:, 2*image_size_x-win_x:3*image_size_x+win_x, 3*image_size_y-win_y:4*image_size_y]
+        img_15 = image[:,:, 3*image_size_x-win_x:4*image_size_x, 3*image_size_y-win_y:4*image_size_y]
+
+        model_output[:, 0:image_size_x-win_x, 0:image_size_y-win_y] = evaluate_model([img_0, 0])[0]
+        model_output[:, image_size_x-win_x:2*image_size_x-win_x, 0:image_size_y-win_y] = evaluate_model([img_1, 0])[0]
+        model_output[:, 2*image_size_x-win_x:3*image_size_x-win_x, 0:image_size_y-win_y] = evaluate_model([img_2, 0])[0]
+        model_output[:, 3*image_size_x-win_x:4*image_size_x-win_x, 0:image_size_y-win_y] = evaluate_model([img_3, 0])[0]
+
+        model_output[:, 0:image_size_x-win_x, image_size_y-win_y:2*image_size_y-win_y] = evaluate_model([img_4, 0])[0]
+        model_output[:, image_size_x-win_x:2*image_size_x-win_x, image_size_y-win_y:2*image_size_y-win_y] = evaluate_model([img_5, 0])[0]
+        model_output[:, 2*image_size_x-win_x:3*image_size_x-win_x, image_size_y-win_y:2*image_size_y-win_y] = evaluate_model([img_6, 0])[0]
+        model_output[:, 3*image_size_x-win_x:4*image_size_x-win_x, image_size_y-win_y:2*image_size_y-win_y] = evaluate_model([img_7, 0])[0]
+
+        model_output[:, 0:image_size_x-win_x, 2*image_size_y-win_y:3*image_size_y-win_y] = evaluate_model([img_8, 0])[0]
+        model_output[:, image_size_x-win_x:2*image_size_x-win_x, 2*image_size_y-win_y:3*image_size_y-win_y] = evaluate_model([img_9, 0])[0]
+        model_output[:, 2*image_size_x-win_x:3*image_size_x-win_x, 2*image_size_y-win_y:3*image_size_y-win_y] = evaluate_model([img_10, 0])[0]
+        model_output[:, 3*image_size_x-win_x:4*image_size_x-win_x, 2*image_size_y-win_y:3*image_size_y-win_y] = evaluate_model([img_11, 0])[0]
+
+        model_output[:, 0:image_size_x-win_x, 3*image_size_y-win_y:4*image_size_y-2*win_y] = evaluate_model([img_12, 0])[0]
+        model_output[:, image_size_x-win_x:2*image_size_x-win_x, 3*image_size_y-win_y:4*image_size_y-win_y] = evaluate_model([img_13, 0])[0]
+        model_output[:, 2*image_size_x-win_x:3*image_size_x-win_x, 3*image_size_y-win_y:4*image_size_y-win_y] = evaluate_model([img_14, 0])[0]
+        model_output[:, 3*image_size_x-win_x:4*image_size_x-win_x, 3*image_size_y-win_y:4*image_size_y-win_y] = evaluate_model([img_15, 0])[0]
+
+
     else:
+        image_size_x = image.shape[2]
+        image_size_y = image.shape[3]
         model_output = evaluate_model([image,0])[0]
         model_output = model_output[0,:,:,:]
 
     model_output = np.pad(model_output, pad_width = [(0,0), (win_x, win_x),(win_y,win_y)], mode = 'constant', constant_values = [(0,0), (0,0), (0,0)])
     return model_output
 
-def run_model_on_directory(data_location, channel_names, output_location, model, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None):
+def run_model_on_directory(data_location, channel_names, output_location, model, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None, rgb = False):
     n_features = model.layers[-1].output_shape[1]
     counter = 0
 
-    image_list = get_images_from_directory(data_location, channel_names)
+    if rgb:
+        image_list = get_images_rgb(data_location, channel_names[0]) # pass one 'channel name' in all rgb filenames
+    else:
+        image_list = get_images_from_directory(data_location, channel_names)
     processed_image_list = []
 
     for image in image_list:
@@ -1489,16 +1590,21 @@ def run_model_on_directory(data_location, channel_names, output_location, model,
 
     return processed_image_list
 
-def run_models_on_directory(data_location, channel_names, output_location, model_fn, list_of_weights, n_features = 2, image_size_x = 1080, image_size_y = 1280, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None):
+def run_models_on_directory(data_location, channel_names, output_location, model_fn, list_of_weights, n_features = 2, image_size_x = 1080, image_size_y = 1280, win_x = 30, win_y = 30, std = False, split = True, process = True, save = True, pad = None, rgb=False):
 
-    batch_input_shape = (1,len(channel_names),image_size_x+win_x, image_size_y+win_y)
+    if rgb:
+        nb_chan = 3
+    else:
+        nb_chan = len(channel_names)
+
+    batch_input_shape = (1,nb_chan,image_size_x+win_x, image_size_y+win_y)
     model = model_fn(batch_input_shape = batch_input_shape, n_features = n_features, weights_path = list_of_weights[0])
     n_features = model.layers[-1].output_shape[1]
 
     model_outputs = []
     for weights_path in list_of_weights:
         model = set_weights(model, weights_path = weights_path)
-        processed_image_list= run_model_on_directory(data_location, channel_names, output_location, model, win_x = win_x, win_y = win_y, save = False, std = std, split = split, process = process, pad = pad)
+        processed_image_list= run_model_on_directory(data_location, channel_names, output_location, model, win_x = win_x, win_y = win_y, save = False, std = std, split = split, process = process, pad = pad, rgb = rgb)
         model_outputs += [np.stack(processed_image_list, axis = 0)]
 
     # Average all images
