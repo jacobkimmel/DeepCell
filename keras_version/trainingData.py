@@ -329,15 +329,14 @@ def identify_training_pixels(feature_mask, min_num, window_x = 50, window_y = 50
 
     Returns
     -------
-    feature_rows : list of integers.
-        row indices for pixels to train on.
-    feature_cols : list of integers.
-        col indices for pixels to train on.
-    feature_batch : list of integers.
-        batch indices for pixels to train on. Only neccessary if subdirectories
-        in the training directory are utilized.
-    feature_label : list of integers.
-        ground truth class labels for pixels to train on.
+    feature_matrix : ndarray of integers.
+        4 x N array of training pixel locations, batch numbers, and labels.
+            Layout:
+            rows -- row indices for pixels to train on.
+            cols -- col indices for pixels to train on.
+            batch -- batch indices for pixels to train on. Only neccessary if subdirectories
+                        in the training directory are utilized.
+            labels -- ground truth class labels for pixels to train on.
 
     Notes
     -----
@@ -428,7 +427,7 @@ def split_rgb(fname, resize_img=None):
     '''
     Splits an rgb image and saves each channel as a separate image file
     in the same source directory as the original image.
-    
+
     Parameters
     ----------
     fname : string.
