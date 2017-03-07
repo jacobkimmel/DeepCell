@@ -21,4 +21,4 @@ min_num = determine_min_examples(feature_mask, window_x, window_y)
 
 feature_matrix = identify_training_pixels(feature_mask, min_num, window_x, window_y, max_training_examples)
 print("Saving training data to :" + file_name_save)
-save_training_data(file_name_save, channels, rows, cols, batch, label, window_x, window_y)
+save_training_data(file_name_save, channels, feature_matrix, window_x, window_y)
