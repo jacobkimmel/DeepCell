@@ -79,4 +79,4 @@ predictions = run_models_on_directory(
         win_x = window_x,
         win_y = window_y,
         split = 2,
-        rgb = True)
+        rgb = False)

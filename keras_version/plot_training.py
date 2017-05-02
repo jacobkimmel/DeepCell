@@ -4,6 +4,7 @@ Plot keras model training data
 
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def get_loss_dict(loss_file):
     ll = np.load(loss_file)
