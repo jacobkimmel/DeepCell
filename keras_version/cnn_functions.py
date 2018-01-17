@@ -58,6 +58,7 @@ from keras import initializations as initializations
 from keras import regularizers as regularizers
 from keras import constraints as constraints
 
+from PIL import Image
 
 """
 Helper functions
@@ -301,7 +302,7 @@ def get_image(file_name, invert=False):
         ndarray of float32's representing the loaded image.
     '''
     if '.tif' in file_name:
-        im = tiff.TiffFile(file_name).asarray()
+        im = np.array(Image.open(file_name))
     else:
         im = imread(file_name)
 
